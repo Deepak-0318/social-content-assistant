@@ -1,3 +1,5 @@
+import json
+import os
 import shutil
 from pathlib import Path
 from uuid import UUID
@@ -87,7 +89,17 @@ def analyze_uploaded_media(upload_id: str) -> MediaAnalysisResponse:
         else:
             analysis = process_video(source, output_dir)
             media_type = "video"
+             # Persist metadata for the content-generation pipeline.
+        analysis_path = output_dir / "analysis.json"
+        temp_analysis_path = output_dir / ".analysis.json.tmp"
 
+        temp_analysis_path.write_text(
+            json.dumps(analysis, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        os.chmod(temp_analysis_path, 0o600)
+        os.replace(temp_analysis_path, analysis_path)
+        
         return MediaAnalysisResponse(
             upload_id=canonical_id,
             media_type=media_type,
